@@ -1,12 +1,13 @@
 var IB = IB || {};
-
 var siteUrl = window.location.protocol + "//" + window.location.host + _spPageContextInfo.siteServerRelativeUrl;
+console.log("siteUrl ="+siteUrl );
 IB.LatestDocuments = (function () {
 	var Div = "";
 	var RawData = [];
-
 	var GetData = function (Callback) {
-
+console.log("getdata");
+		var myQuery='(STS_ListItem_DocumentLibrary) AND (FileType:doc* OR FileType:DOC* OR FileType:xl* OR FileType:XL* OR FileType:ppt* OR FileType:PPT* OR FileType:pdf*)'
+		console.log("my query:"+myQuery);
 		var Request = {
 			request: {
 				SortList: {
@@ -18,7 +19,7 @@ IB.LatestDocuments = (function () {
 						'Property': "LastModifiedTime"
 					}]
 				},
-				Querytext: '(path:'+siteUrl+'/") contentclass:"ǂǂ5354535f4c6973744974656d5f446f63756d656e744c696272617279"',
+				Querytext: myQuery,
 				RowLimit: 250,
 				TrimDuplicates: true
 			}
@@ -46,12 +47,12 @@ IB.LatestDocuments = (function () {
 	}
 
 	var DrawResult = function () {
-
+console.log("drawresult");
 		$(Div).html('<ul id="DocList"></ul>');
 
 		var i = 0
 		$.map(RawData, function (RawEntry) {
-			if(i>25)
+			if(i>10)
 				return;
 
 			// Get Data
@@ -61,19 +62,59 @@ IB.LatestDocuments = (function () {
 				Data[Cell.Key] = Cell.Value;
 			});
 
-			if (Data["FileExtension"] != "aspx" && Data["OriginalPath"].toLowerCase().indexOf("/ds/") === -1 && Data["OriginalPath"].toLowerCase().indexOf("/amicale/") === -1){
+			if(Data["LinkingUrl"] == null) {
+				FilePath= Data["Path"] 
+			} else {
+				FilePath= Data["LinkingUrl"] 
+			}
+
+			if (Data["FileExtension"] != "aaspx"){
 				// Draw Line
 				$('#DocList').append('' +
-					'<a style="display: flex;text-decoration:none" target="_blank" href="' + Data["Path"] + '">' +
-					'<div style="display: inline-block; width:100%"> <h4 style="width:99%">' + Data["Title"] + '</h4>' +
+					'<a style="display: flex;text-decoration:none" target="_blank" href="' + FilePath+ '">' +
+					'<div style="display: inline-block;"><img src="' + GetIconURL(Data["FileExtension"]) + '" style="width:25px;padding:0px 15px 15px 15px;"></div> ' +
+					'<div style="display: inline-block; width:100%"> '+
 					'<h5>' + Data["Path"].split("/")[Data["Path"].split("/").length - 1] + ' - ' + moment(Data["LastModifiedTime"]).format("DD/MM/YYYY") + '<h5/>' +
-					//'<h6 style="color:#aaa;font-size:0.6em">' + Data["Author"] + '<h6/>' +
 					'</div></a>');
 				i++;
 			}
 		});
 	}
+var GetIconURL = function (Name) {
+		var IcoUrl = siteUrl;
+		switch (Name) {
+			case "docx":
+			case "doc":
+				IcoUrl += "/Style Library/OLVBrugge/images/word.png";
+				break;
 
+			case "xls":
+			case "xlsx":
+				IcoUrl += "/Style Library/OLVBrugge/images/excel.png";
+				break;
+
+			case "ppt":
+			case "pptx":
+				IcoUrl += "/Style Library/OLVBrugge/images/powerpoint.png";
+				break;
+
+			case "pdf":
+				IcoUrl += "/Style Library/OLVBrugge/images/pdf.png";
+				break;
+
+			case "one":
+			case "onenote":
+			case "onepkg":
+				IcoUrl += "/Style Library/OLVBrugge/images/onenote.png";
+				break;
+
+			default:
+				IcoUrl += "/Style Library/OLVBrugge/images/other.png";
+				break;
+		}
+
+		return IcoUrl;
+	}
 
 	return {
 		Init: function (div) {
